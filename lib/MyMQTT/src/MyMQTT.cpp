@@ -43,8 +43,8 @@ void mqttSubscribeCb(char* topic, byte *payload, unsigned int length) {
   }
 }
 
-void connectToMQTTBroker(MY_CALLBACK_SIGNATURE) {
-  myCallback = callback;
+void connectToMQTTBroker(MQTT_CONNECT_CALLBACK, MQTT_MSG_CALLBACK) {
+  myCallback = mqttMsgCallback;
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
   mqttClient.setCallback(mqttSubscribeCb);
  
@@ -52,19 +52,16 @@ void connectToMQTTBroker(MY_CALLBACK_SIGNATURE) {
     Serial.println("Connecting to MQTT...");
  
     if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD )) {
- 
       Serial.println("connected");
- 
+      if (mqttConnectCallback) {
+        mqttConnectCallback(mqttClient);
+      }
     } else {
- 
       Serial.print("failed with state ");
       Serial.print(mqttClient.state());
       delay(2000);
- 
     }
   }
-  mqttClient.publish("get/echo", "Hello from ESP32");
-  mqttClient.subscribe("set/#");
 }
 
 void serviceMQTTConnection(void) {
