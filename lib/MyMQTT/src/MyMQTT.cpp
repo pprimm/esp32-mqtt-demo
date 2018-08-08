@@ -26,6 +26,7 @@ void connectToWifi(void) {
 void (*myCallback)(char*, char*, PubSubClient&) = NULL;
 
 char mqttReceiveBuffer[256];
+const size_t RECEIVE_LIMIT = sizeof(mqttReceiveBuffer) - 1;
 void mqttSubscribeCb(char* topic, byte *payload, unsigned int length) {
   Serial.println("-------new message from broker-----");
   Serial.print("topic: ");
@@ -33,7 +34,7 @@ void mqttSubscribeCb(char* topic, byte *payload, unsigned int length) {
   Serial.print("payload: ");  
   Serial.write(payload, length);
   Serial.println();
-  strncpy(mqttReceiveBuffer,(const char *)(payload),length);
+  strncpy(mqttReceiveBuffer,(const char *)(payload),length < RECEIVE_LIMIT ? length : RECEIVE_LIMIT);
   mqttReceiveBuffer[length] = '\0';
   //Serial.println(strlen(mqttReceiveBuffer));
   //mqttClient.publish("get/echo",mqttReceiveBuffer);
