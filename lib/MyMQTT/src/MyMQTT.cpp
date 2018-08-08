@@ -1,6 +1,5 @@
 #include "MyMQTT.h"
 #include <WiFi.h>
-#include <PubSubClient.h>
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -24,6 +23,8 @@ void connectToWifi(void) {
   Serial.println(WiFi.localIP());
 }
 
+void (*myCallback)(char*, char*, PubSubClient&) = NULL;
+
 char mqttReceiveBuffer[256];
 void mqttSubscribeCb(char* topic, byte *payload, unsigned int length) {
   Serial.println("-------new message from broker-----");
@@ -33,19 +34,23 @@ void mqttSubscribeCb(char* topic, byte *payload, unsigned int length) {
   Serial.write(payload, length);
   Serial.println();
   strncpy(mqttReceiveBuffer,(const char *)(payload),length);
-  //mqttReceiveBuffer[length] = '\0';
+  mqttReceiveBuffer[length] = '\0';
   //Serial.println(strlen(mqttReceiveBuffer));
-  mqttClient.publish("get/echo",mqttReceiveBuffer);
+  //mqttClient.publish("get/echo",mqttReceiveBuffer);
+  if (myCallback) {
+    myCallback(topic,mqttReceiveBuffer,mqttClient);
+  }
 }
 
-void connectToMQTTBroker(void) {
+void connectToMQTTBroker(MY_CALLBACK_SIGNATURE) {
+  myCallback = callback;
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
   mqttClient.setCallback(mqttSubscribeCb);
  
   while (!mqttClient.connected()) {
     Serial.println("Connecting to MQTT...");
  
-    if (mqttClient.connect("ESP32Client-19834766", MQTT_USERNAME, MQTT_PASSWORD )) {
+    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD )) {
  
       Serial.println("connected");
  
@@ -58,7 +63,7 @@ void connectToMQTTBroker(void) {
     }
   }
   mqttClient.publish("get/echo", "Hello from ESP32");
-  mqttClient.subscribe("set/echo");
+  mqttClient.subscribe("set/#");
 }
 
 void serviceMQTTConnection(void) {
