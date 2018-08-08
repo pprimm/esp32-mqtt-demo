@@ -5,7 +5,10 @@
 #define LED_OFF "OFF"
 
 void mqttConnected(PubSubClient& client) {
-  client.publish(GET_ECHO_TOPIC, "Hello from ESP32");
+  String hello("Hello from ESP32 ");
+  hello.concat(DEVICE_NAME);
+  client.publish(GET_ECHO_TOPIC, hello.c_str());
+  client.publish(GET_LED_TOPIC, LED_OFF);
   client.subscribe(SUBSCRIBE_TOPIC);
 }
 
@@ -21,7 +24,7 @@ void mqttMessage(char* topic, char* value, PubSubClient& client) {
     Serial.println(valueString);
     uint8_t ledValue = valueString.equals(LED_ON) ? HIGH : LOW;
     digitalWrite(LED_BUILTIN, ledValue);
-    client.publish(GET_ECHO_TOPIC,ledValue == HIGH ? LED_ON : LED_OFF);
+    client.publish(GET_LED_TOPIC,ledValue == HIGH ? LED_ON : LED_OFF);
   }
 }
 
